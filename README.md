@@ -54,6 +54,12 @@ When publishing, the `Assets/frames/` directory is copied alongside the binary a
 
 ---
 
+## Exported binaries available at
+
+[TCG-Creator @ KillGorack.com](https://www.killgorack.com/PX4/index.php?ap=software&id=9&cn=det)
+
+---
+
 ## Available Frame Colors
 
 red, blue, green, gold, purple, black, white, silver, bronze, crimson, teal, orange, pink, navy, forest, copper, ice, obsidian, bone, toxic
