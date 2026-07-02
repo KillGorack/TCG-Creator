@@ -45,6 +45,13 @@ public class MainWindowViewModel : INotifyPropertyChanged
         set => Set(ref _currentCard, value);
     }
 
+    private Card? _selectedCard;
+    public Card? SelectedCard
+    {
+        get => _selectedCard;
+        set => Set(ref _selectedCard, value);
+    }
+
     private string _selectedCardId = "";
     public string SelectedCardId
     {
@@ -178,6 +185,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public void NewCard()
     {
         CurrentCard = new Card();
+        SelectedCard = null;
         LoadCardIntoEditor(CurrentCard);
         SelectedCardId = "";
         IsDirty = false;
@@ -186,6 +194,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public void LoadCard(Card card)
     {
         CurrentCard = card;
+        SelectedCard = card;
         LoadCardIntoEditor(card);
         SelectedCardId = card.Id.ToString();
         IsDirty = false;

@@ -16,12 +16,16 @@ public partial class MainWindow : Window
         DataContext = new MainWindowViewModel();
     }
 
-    private async void ShowUnsavedChangesDialog(Action onDiscard)
+    private async void ShowUnsavedChangesDialog(Action onDiscard, Action? onCancel = null)
     {
         var confirmed = await ConfirmDialog.ShowAsync(this, "Unsaved Changes", "Discard unsaved changes and continue?");
         if (confirmed)
         {
             onDiscard();
+        }
+        else
+        {
+            onCancel?.Invoke();
         }
     }
 
@@ -140,20 +144,50 @@ public partial class MainWindow : Window
                 ShowUnsavedChangesDialog(() =>
                 {
                     vm.LoadCard(card);
-                    if (!LoadCardArt(vm.CurrentCard.Id))
-                    {
-                        LoadPlaceholder();
-                    }
+                    LoadCardArtOrPlaceholder(card.Id);
                 });
             }
             else
             {
                 vm.LoadCard(vm.CurrentCard);
-                if (!LoadCardArt(vm.CurrentCard.Id))
-                {
-                    LoadPlaceholder();
-                }
+                LoadCardArtOrPlaceholder(vm.CurrentCard.Id);
             }
+        }
+    }
+
+    private void CardListBox_SelectionChanged(object? sender, Avalonia.Controls.SelectionChangedEventArgs e)
+    {
+        if (DataContext is MainWindowViewModel vm && vm.SelectedCard != null)
+        {
+            if (vm.SelectedCard == vm.CurrentCard)
+                return;
+
+            if (vm.IsDirty)
+            {
+                var selectedCard = vm.SelectedCard;
+                ShowUnsavedChangesDialog(() =>
+                {
+                    vm.LoadCard(selectedCard);
+                    LoadCardArtOrPlaceholder(selectedCard.Id);
+                }, () =>
+                {
+                    var cardListBox = this.FindControl<ListBox>("CardListBox")!;
+                    cardListBox.SelectedItem = vm.CurrentCard;
+                });
+            }
+            else
+            {
+                vm.LoadCard(vm.SelectedCard);
+                LoadCardArtOrPlaceholder(vm.SelectedCard.Id);
+            }
+        }
+    }
+
+    private void LoadCardArtOrPlaceholder(int cardId)
+    {
+        if (!LoadCardArt(cardId))
+        {
+            LoadPlaceholder();
         }
     }
 

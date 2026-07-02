@@ -31,7 +31,8 @@
                 </Border>
 
                 <ListBox x:Name="CardListBox" Grid.Row="1" ItemsSource="{Binding Cards}" 
-                         SelectedItem="{Binding CurrentCard}"
+                         SelectedItem="{Binding SelectedCard}"
+                         SelectionChanged="CardListBox_SelectionChanged"
                          Margin="12,0,12,12"
                          Background="#1e1e1e" Foreground="White"
                          MinHeight="180"
