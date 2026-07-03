@@ -7,7 +7,7 @@
         mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="700"
         x:Class="CardCreator.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Icon="/Assets/avalonia-logo.ico"
+        Icon="/Assets/icon.png"
         Width="926"
         Height="600"
         Title="CardCreator"
@@ -29,7 +29,6 @@
                             HorizontalAlignment="Stretch"
                             Background="#4a6644" Foreground="White" Padding="8,6"/>
                 </Border>
-
                 <ListBox x:Name="CardListBox" Grid.Row="1" ItemsSource="{Binding Cards}" 
                          SelectedItem="{Binding SelectedCard}"
                          SelectionChanged="CardListBox_SelectionChanged"
