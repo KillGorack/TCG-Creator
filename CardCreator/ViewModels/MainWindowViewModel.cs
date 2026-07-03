@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using Avalonia.Media.Imaging;
 using CardCreator.Data;
@@ -22,7 +23,10 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public MainWindowViewModel()
     {
         RefreshCardList();
-        NewCard();
+        if (Cards.Count > 0)
+            LoadCard(Cards[0]);
+        else
+            NewCard();
     }
 
     public string[] FrameColors { get; } = [
@@ -176,7 +180,10 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     public void RefreshCardList()
     {
-        var cards = CardRepository.ReadAll();
+        var cards = CardRepository.ReadAll()
+            .OrderBy(card => card.Title ?? string.Empty, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
         Cards.Clear();
         foreach (var card in cards)
             Cards.Add(card);

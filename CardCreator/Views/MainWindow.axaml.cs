@@ -13,7 +13,13 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        DataContext = new MainWindowViewModel();
+        var viewModel = new MainWindowViewModel();
+        DataContext = viewModel;
+
+        if (viewModel.CurrentCard != null && viewModel.CurrentCard.Id != 0)
+        {
+            LoadCardArtOrPlaceholder(viewModel.CurrentCard.Id);
+        }
     }
 
     private async void ShowUnsavedChangesDialog(Action onDiscard, Action? onCancel = null)
