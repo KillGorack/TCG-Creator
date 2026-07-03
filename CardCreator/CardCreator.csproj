@@ -11,7 +11,7 @@
   <ItemGroup>
       <Folder Include="Models\" />
       <AvaloniaResource Include="Assets\**" />
-      <Content Include="Assets\frames\**">
+      <Content Include="Assets\frames\monolith\**">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
   </ItemGroup>

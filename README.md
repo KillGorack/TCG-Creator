@@ -50,7 +50,7 @@ The database is created automatically on first run at:
 
 ---
 
-When publishing, the `Assets/frames/` directory is copied alongside the binary automatically.
+When publishing, the `Assets/frames/monolith/` directory is copied alongside the binary automatically.
 
 ---
 

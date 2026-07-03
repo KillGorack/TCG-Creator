@@ -148,7 +148,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     private void LoadFrameBitmaps()
     {
-        var dir = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "frames", _frameColor);
+        var dir = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "frames", "monolith", _frameColor);
         BaseFrameBitmap    = Load(System.IO.Path.Combine(dir, $"{_frameColor}_base.png"));
         CostBitmap         = Load(System.IO.Path.Combine(dir, "cost.png"));
         TitleBitmap        = Load(System.IO.Path.Combine(dir, "title.png"));
