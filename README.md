@@ -30,7 +30,7 @@ Cards are rendered at 1500x2100px (600 DPI print-ready) with swappable color-the
 
 ## Requirements
 
-- .NET 8 SDK
+- .NET 9 SDK
 - Linux or Windows desktop environment
 
 ---
