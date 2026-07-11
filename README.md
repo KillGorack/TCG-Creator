@@ -22,7 +22,7 @@ Cards are rendered at 1500x2100px (600 DPI print-ready) with swappable color-the
 ## Tech Stack
 
 - [Avalonia UI](https://avaloniaui.net/) — cross-platform .NET UI framework
-- C# / .NET 8
+- C# / .NET 9
 - SQLite via [Dapper](https://github.com/DapperLib/Dapper) and Microsoft.Data.Sqlite
 - Frame overlays rendered in Blender (Cycles)
 
