@@ -3,6 +3,7 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <GenerateAvaloniaResources>false</GenerateAvaloniaResources>
@@ -10,7 +11,8 @@
 
   <ItemGroup>
       <Folder Include="Models\" />
-      <AvaloniaResource Include="Assets\**" />
+      <AvaloniaResource Include="Assets\**" Exclude="Assets\frames\**" />
+      <AvaloniaResource Include="Icons\*.png" />
       <Content Include="Assets\frames\monolith\**">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
@@ -27,6 +29,7 @@
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.1" />
     <PackageReference Include="Dapper" Version="2.1.79" />
+    <PackageReference Include="PDFsharp" Version="6.2.0" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.8" />
   </ItemGroup>
 </Project>

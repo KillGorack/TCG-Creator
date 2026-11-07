@@ -1,0 +1,104 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:CardCreator.ViewModels"
+        xmlns:ui="using:CardCreator.Theme"
+        x:Class="CardCreator.Views.PrintSheetsWindow"
+        Icon="/Assets/icon.png"
+        Title="Print sheets" Width="1080" Height="740" MinWidth="940" MinHeight="620"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False">
+
+    <Grid Margin="10" RowDefinitions="*,Auto" ColumnDefinitions="400,*" RowSpacing="10" ColumnSpacing="10">
+
+        <ScrollViewer Grid.Row="0" Grid.Column="0" VerticalScrollBarVisibility="Auto">
+            <StackPanel Spacing="10" Margin="0,0,4,0">
+
+                <ui:Section Title="Cards">
+                    <ui:Section.Header>
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Button x:Name="AllBtn" Classes="link" Content="All" />
+                            <Button x:Name="NoneBtn" Classes="link" Content="None" />
+                        </StackPanel>
+                    </ui:Section.Header>
+                    <ScrollViewer MaxHeight="230" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl x:Name="CardList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:PrintItem">
+                                    <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,2">
+                                        <CheckBox Content="{Binding Title}" IsChecked="{Binding Selected}" VerticalAlignment="Center" />
+                                        <TextBox Grid.Column="1" Width="56" MaxLength="2" TextAlignment="Center"
+                                                 Text="{Binding CopiesText}" IsEnabled="{Binding Selected}"
+                                                 ToolTip.Tip="Copies to print" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </ui:Section>
+
+                <ui:Section Title="Paper">
+                    <StackPanel Spacing="8">
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="note" Text="Paper size" />
+                            <ComboBox x:Name="PaperBox" HorizontalAlignment="Stretch" />
+                        </StackPanel>
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                            <StackPanel Spacing="4">
+                                <TextBlock Classes="note" Text="Orientation" />
+                                <ComboBox x:Name="OrientBox" HorizontalAlignment="Stretch" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="4">
+                                <TextBlock Classes="note" Text="Units" />
+                                <ComboBox x:Name="UnitsBox" HorizontalAlignment="Stretch" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </ui:Section>
+
+                <ui:Section Title="Layout">
+                    <StackPanel Spacing="8">
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                            <StackPanel Spacing="4">
+                                <TextBlock Classes="note" Text="Printer margin" ToolTip.Tip="The edge of the paper your printer cannot print on. Most home printers need about 0.25 in (6 mm)." />
+                                <TextBox x:Name="MarginBox" HorizontalAlignment="Stretch" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="4">
+                                <TextBlock Classes="note" Text="Gap between cards" ToolTip.Tip="0 means neighbouring cards share one cut line." />
+                                <TextBox x:Name="GutterBox" HorizontalAlignment="Stretch" />
+                            </StackPanel>
+                        </Grid>
+                        <CheckBox x:Name="MarksCheck" Content="Crop marks in the margins" />
+                        <TextBlock x:Name="LayoutText" Classes="strong" />
+                        <TextBlock x:Name="WarnText" Classes="error" TextWrapping="Wrap" />
+                        <TextBlock Classes="note" TextWrapping="Wrap"
+                                   Text="Print the PDF at 100% (Actual size). Do not choose Fit to page: that shrinks the cards." />
+                    </StackPanel>
+                </ui:Section>
+            </StackPanel>
+        </ScrollViewer>
+
+        <ui:Section Grid.Row="0" Grid.Column="1" Title="Preview">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0">
+                    <Button x:Name="PrevBtn" Classes="icon" Tag="chevron-left" ToolTip.Tip="Previous sheet" />
+                    <TextBlock x:Name="SheetText" VerticalAlignment="Center" Margin="10,0" MinWidth="110" TextAlignment="Center" />
+                    <Button x:Name="NextBtn" Classes="icon" Tag="chevron-right" ToolTip.Tip="Next sheet" />
+                </StackPanel>
+                <Border Classes="panel" Background="{DynamicResource HoverBrush}" Padding="10" ClipToBounds="True">
+                    <Viewbox Stretch="Uniform">
+                        <Canvas x:Name="PreviewCanvas" />
+                    </Viewbox>
+                </Border>
+            </DockPanel>
+        </ui:Section>
+
+        <Border Grid.Row="1" Grid.ColumnSpan="2" Classes="panel" Padding="10,8">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6">
+                    <Button x:Name="CancelBtn" Content="Cancel" />
+                    <Button x:Name="MakeBtn" Content="Make PDF" />
+                </StackPanel>
+                <TextBlock x:Name="SummaryText" VerticalAlignment="Center" />
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>
