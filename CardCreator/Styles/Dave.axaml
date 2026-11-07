@@ -1,0 +1,209 @@
+<!--
+    Dave-Standard control styles for Avalonia (v0.1). Port of ../c#_WPF and ../python_customtkinter (the LULIM look):
+      * Rounded Surface panels floating on the Window color, 10px gutters, radius 6.
+      * Flat icon buttons (Lucide PNG masks filled with the button's Foreground, so they follow the theme).
+      * No loud accent: neutral buttons and no system blue (see Colors.axaml); color only means something.
+      * Colors only via {DynamicResource XxxBrush}. Text sizes via BodyFontSize / SmallFontSize / HeadingFontSize.
+    Do not edit per app. Fix here so every app benefits.
+-->
+<Styles xmlns="https://github.com/avaloniaui"
+        x:CompileBindings="False"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="clr-namespace:CardCreator.Theme">
+
+    <Styles.Resources>
+        <x:Double x:Key="BodyFontSize">13</x:Double>
+        <x:Double x:Key="SmallFontSize">11</x:Double>
+        <x:Double x:Key="HeadingFontSize">17</x:Double>
+        <CornerRadius x:Key="Radius">6</CornerRadius>
+        <ui:IconConverter x:Key="Icon" />
+        <!-- ui:Section: titled panel, optional + by the title (a ControlTheme, so it is found by type) -->
+        <ControlTheme x:Key="{x:Type ui:Section}" TargetType="ui:Section">
+            <Setter Property="Padding" Value="14,8,14,12" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Classes="panel" Padding="{TemplateBinding Padding}">
+                        <DockPanel>
+                            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8" Spacing="2">
+                                <Button Name="PART_Add" Classes="icon" Tag="plus" Margin="-6,0,0,0" IsVisible="{TemplateBinding ShowAdd}"
+                                        ToolTip.Tip="{TemplateBinding AddTip}" />
+                                <TextBlock Text="{TemplateBinding Title}" Classes="section" VerticalAlignment="Center" />
+                                <ContentPresenter Content="{TemplateBinding Header}" VerticalAlignment="Center" Margin="8,0,0,0" />
+                            </StackPanel>
+                            <ContentPresenter Content="{TemplateBinding Content}" />
+                        </DockPanel>
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </ControlTheme>
+    </Styles.Resources>
+
+    <!-- ===================== WINDOW ===================== -->
+    <Style Selector=":is(Window)">
+        <Setter Property="Background" Value="{DynamicResource WindowBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+        <Setter Property="FontSize" Value="{DynamicResource BodyFontSize}" />
+    </Style>
+
+    <!-- ===================== TEXT (classes on TextBlock) ===================== -->
+    <Style Selector="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+    </Style>
+    <Style Selector="TextBlock.heading">
+        <Setter Property="FontSize" Value="{DynamicResource HeadingFontSize}" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextStrongBrush}" />
+    </Style>
+    <Style Selector="TextBlock.section">
+        <Setter Property="FontWeight" Value="Bold" />
+    </Style>
+    <Style Selector="TextBlock.strong">
+        <Setter Property="Foreground" Value="{DynamicResource TextStrongBrush}" />
+    </Style>
+    <Style Selector="TextBlock.muted">
+        <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+    </Style>
+    <Style Selector="TextBlock.note">
+        <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+        <Setter Property="FontSize" Value="{DynamicResource SmallFontSize}" />
+    </Style>
+    <Style Selector="TextBlock.error">
+        <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
+        <Setter Property="FontSize" Value="{DynamicResource SmallFontSize}" />
+    </Style>
+
+    <!-- ===================== CONTAINERS ===================== -->
+    <Style Selector="Border.panel">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        <Setter Property="CornerRadius" Value="{StaticResource Radius}" />
+    </Style>
+    <Style Selector="Border.divider">
+        <Setter Property="Width" Value="1" />
+        <Setter Property="Height" Value="18" />
+        <Setter Property="Margin" Value="6,0" />
+        <Setter Property="Background" Value="{DynamicResource RuleBrush}" />
+    </Style>
+
+    <!-- ===================== BUTTONS ===================== -->
+    <!-- Neutral filled button (Save, Cancel). The colors come from the Fluent overrides in Colors.axaml. -->
+    <Style Selector="Button">
+        <Setter Property="Height" Value="28" />
+        <Setter Property="MinWidth" Value="80" />
+        <Setter Property="Padding" Value="12,0" />
+        <Setter Property="CornerRadius" Value="{StaticResource Radius}" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.danger"><Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" /></Style>
+    <Style Selector="Button.danger:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
+    </Style>
+
+    <!-- Flat icon button. Tag = icon name (Icons/*.png). Icon size = FontSize (18 default; .row = 14). -->
+    <Style Selector="Button.icon">
+        <Setter Property="Width" Value="32" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="FontSize" Value="18" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Name="Bg" Background="{TemplateBinding Background}" CornerRadius="{TemplateBinding CornerRadius}">
+                    <Rectangle Width="{TemplateBinding FontSize}" Height="{TemplateBinding FontSize}"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               Fill="{TemplateBinding Foreground}">
+                        <Rectangle.OpacityMask>
+                            <ImageBrush Source="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource Icon}}" />
+                        </Rectangle.OpacityMask>
+                    </Rectangle>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <Style Selector="Button.icon:pointerover /template/ Border#Bg"><Setter Property="Background" Value="{DynamicResource HoverBrush}" /></Style>
+    <Style Selector="Button.icon:pressed /template/ Border#Bg"><Setter Property="Background" Value="{DynamicResource HoverBrush}" /></Style>
+    <Style Selector="Button.icon:disabled"><Setter Property="Opacity" Value="0.4" /></Style>
+    <Style Selector="Button.icon.muted"><Setter Property="Foreground" Value="{DynamicResource MutedBrush}" /></Style>
+    <Style Selector="Button.icon.danger"><Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" /></Style>
+    <!-- Icon inside a table row -->
+    <Style Selector="Button.icon.row">
+        <Setter Property="Width" Value="24" />
+        <Setter Property="Height" Value="24" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+    </Style>
+
+    <!-- Text link (Copy, Clear) -->
+    <Style Selector="Button.link">
+        <Setter Property="Height" Value="NaN" />
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="Padding" Value="2,0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource LinkBrush}" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Button.link:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="TextBlock.TextDecorations" Value="Underline" />
+    </Style>
+
+    <!-- ===================== INPUTS ===================== -->
+    <Style Selector="TextBox">
+        <Setter Property="CornerRadius" Value="{StaticResource Radius}" />
+        <Setter Property="MinHeight" Value="28" />
+        <Setter Property="Padding" Value="8,4" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="SelectionBrush" Value="{DynamicResource ButtonBrush}" />
+        <Setter Property="CaretBrush" Value="{DynamicResource TextStrongBrush}" />
+    </Style>
+    <Style Selector="TextBox.area">
+        <Setter Property="AcceptsReturn" Value="True" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="VerticalContentAlignment" Value="Top" />
+    </Style>
+    <Style Selector="ComboBox">
+        <Setter Property="CornerRadius" Value="{StaticResource Radius}" />
+        <Setter Property="MinHeight" Value="28" />
+        <Setter Property="Padding" Value="8,3" />
+    </Style>
+
+    <!-- ===================== SCROLLING ===================== -->
+    <Style Selector="ScrollViewer">
+        <Setter Property="AllowAutoHide" Value="False" />
+    </Style>
+
+    <!-- ===================== DATA TABLE (ui:DataTable) ===================== -->
+    <!-- stripes Hover, mouse-over Rule, selected Button, header TextStrong bold over a 1px Rule -->
+    <Style Selector="Border.row">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Padding" Value="0,5" />
+    </Style>
+    <Style Selector="Border.row.alt"><Setter Property="Background" Value="{DynamicResource HoverBrush}" /></Style>
+    <Style Selector="Border.row:pointerover"><Setter Property="Background" Value="{DynamicResource RuleBrush}" /></Style>
+    <Style Selector="Border.row.selected"><Setter Property="Background" Value="{DynamicResource ButtonBrush}" /></Style>
+    <Style Selector="Border.row.selected Button.icon.row"><Setter Property="Foreground" Value="{DynamicResource TextStrongBrush}" /></Style>
+    <Style Selector="Border.row.selected TextBlock"><Setter Property="Foreground" Value="{DynamicResource TextStrongBrush}" /></Style>
+    <Style Selector="Border.tablehead TextBlock">
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextStrongBrush}" />
+    </Style>
+
+    <!-- ===================== DATE POPUP DAYS (ui:DateEntry) ===================== -->
+    <Style Selector="Border.day"><Setter Property="Background" Value="Transparent" /><Setter Property="CornerRadius" Value="4" /></Style>
+    <Style Selector="Border.day:pointerover"><Setter Property="Background" Value="{DynamicResource HoverBrush}" /></Style>
+    <Style Selector="Border.day.other TextBlock"><Setter Property="Foreground" Value="{DynamicResource MutedBrush}" /></Style>
+    <Style Selector="Border.day.today TextBlock">
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextStrongBrush}" />
+    </Style>
+    <Style Selector="Border.day.picked"><Setter Property="Background" Value="{DynamicResource ButtonBrush}" /></Style>
+    <Style Selector="Border.day.picked TextBlock"><Setter Property="Foreground" Value="{DynamicResource TextStrongBrush}" /></Style>
+
+    <!-- tooltips: Surface + Rule border -->
+    <Style Selector="ToolTip">
+        <Setter Property="Padding" Value="6,2" />
+        <Setter Property="FontSize" Value="{DynamicResource SmallFontSize}" />
+    </Style>
+</Styles>

@@ -17,5 +17,5 @@ public class Card
     // Display properties
     public string BgColor { get; set; } = "#000000";
     public string? ImagePath { get; set; }
-    public string FrameColor { get; set; } = "silver";
+    public string FrameColor { get; set; } = "white";
 }

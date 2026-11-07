@@ -1,274 +1,164 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
+using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
+using Avalonia;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using CardCreator.Data;
 using CardCreator.Models;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace CardCreator.ViewModels;
 
-public class MainWindowViewModel : INotifyPropertyChanged
+public partial class MainWindowViewModel : ObservableObject
 {
-    public event PropertyChangedEventHandler? PropertyChanged;
+    /// <summary>The frame set (the rendered frame and its colors). Colors are rebuilt from it on demand.</summary>
+    static readonly FrameSet Frames = FrameSet.Load(Path.Combine(AppContext.BaseDirectory, "Assets", "frames", "monolith"));
+    public IReadOnlyList<string> FrameColors => Frames.ColorNames;
 
-    private void Set<T>(ref T field, T value, [CallerMemberName] string? name = null)
-    {
-        if (Equals(field, value)) return;
-        field = value;
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-    }
+    public ZoneViewModel[] Zones { get; } = ZoneViewModel.CreateAll();
+    public ObservableCollection<Card> Cards { get; } = new();
+
+    [ObservableProperty] private Card? _currentCard;
+    [ObservableProperty] private bool _isDirty;
+    [ObservableProperty] private string _bodyText = "";
+    [ObservableProperty] private string _frameColor = "white";
+    [ObservableProperty] private string _bgColor = "#000000";
+    [ObservableProperty] private IBrush _bgBrush = Brushes.Black;
+    [ObservableProperty] private Bitmap? _baseFrame;
+    TintedFrame? _tinted;                       // the bitmaps currently on the card; freed when the color changes
+    [ObservableProperty] private Bitmap? _art;
+
+    bool _loading;
+    string? _pendingArtPath;       // art picked for a card that is not saved yet (or replaced): copied on Save
+    Bitmap? _placeholder;
 
     public MainWindowViewModel()
     {
+        foreach (var z in Zones)
+            z.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(ZoneViewModel.Text)) MarkDirty(); };
         RefreshCardList();
-        if (Cards.Count > 0)
-            LoadCard(Cards[0]);
-        else
-            NewCard();
+        if (Cards.Count > 0) LoadCard(Cards[0]); else NewCard();
     }
 
-    public string[] FrameColors { get; } = [
-        "red", "blue", "green", "gold", "purple", "black", "white",
-        "silver", "bronze", "crimson", "teal", "orange", "pink",
-        "navy", "forest", "copper", "ice", "obsidian", "bone", "toxic"
-    ];
+    void MarkDirty() { if (!_loading) IsDirty = true; }
 
-    private ObservableCollection<Card> _cards = new();
-    public ObservableCollection<Card> Cards
+    partial void OnBodyTextChanged(string value) => MarkDirty();
+    partial void OnFrameColorChanged(string value) { LoadFrames(); MarkDirty(); }
+    partial void OnBgColorChanged(string value)
     {
-        get => _cards;
-        set => Set(ref _cards, value);
+        if (Color.TryParse(value, out var c)) BgBrush = new SolidColorBrush(c);
+        MarkDirty();
     }
 
-    private Card? _currentCard;
-    public Card? CurrentCard
-    {
-        get => _currentCard;
-        set => Set(ref _currentCard, value);
-    }
-
-    private Card? _selectedCard;
-    public Card? SelectedCard
-    {
-        get => _selectedCard;
-        set => Set(ref _selectedCard, value);
-    }
-
-    private string _selectedCardId = "";
-    public string SelectedCardId
-    {
-        get => _selectedCardId;
-        set => Set(ref _selectedCardId, value);
-    }
-
-    private string _errorMessage = "";
-    public string ErrorMessage
-    {
-        get => _errorMessage;
-        set => Set(ref _errorMessage, value);
-    }
-
-    private bool _isDirty = false;
-    private bool _isLoading = false;
-    public bool IsDirty
-    {
-        get => _isDirty;
-        set => Set(ref _isDirty, value);
-    }
-
-    private void MarkDirty()
-    {
-        if (!_isLoading)
-            IsDirty = true;
-    }
-
-    public bool ShowCost         => !string.IsNullOrEmpty(_cost);
-    public bool ShowTitle        => !string.IsNullOrEmpty(_title);
-    public bool ShowTopRight     => !string.IsNullOrEmpty(_topRight);
-    public bool ShowNameBar      => !string.IsNullOrEmpty(_nameBar);
-    public bool ShowBottomLeft   => !string.IsNullOrEmpty(_bottomLeft);
-    public bool ShowBottomCenter => !string.IsNullOrEmpty(_bottomCenter);
-    public bool ShowBottomRight  => !string.IsNullOrEmpty(_bottomRight);
-
-    private string _cost          = "";
-    private string _title         = "";
-    private string _topRight      = "";
-    private string _nameBar       = "";
-    private string _bottomLeft    = "";
-    private string _bottomCenter  = "";
-    private string _bottomRight   = "";
-    private string _bodyText      = "";
-    private string _frameColor    = "silver";
-
-    public string Cost
-    {
-        get => _cost;
-        set { Set(ref _cost, value); PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ShowCost))); MarkDirty(); }
-    }
-
-    public string Title
-    {
-        get => _title;
-        set { Set(ref _title, value); PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ShowTitle))); MarkDirty(); }
-    }
-
-    public string TopRight     { get => _topRight;     set { Set(ref _topRight, value);     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ShowTopRight))); MarkDirty(); } }
-    public string NameBar      { get => _nameBar;      set { Set(ref _nameBar, value);      PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ShowNameBar))); MarkDirty(); } }
-    public string BottomLeft   { get => _bottomLeft;   set { Set(ref _bottomLeft, value);   PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ShowBottomLeft))); MarkDirty(); } }
-    public string BottomCenter { get => _bottomCenter; set { Set(ref _bottomCenter, value); PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ShowBottomCenter))); MarkDirty(); } }
-    public string BottomRight  { get => _bottomRight;  set { Set(ref _bottomRight, value);  PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ShowBottomRight))); MarkDirty(); } }
-    public string BodyText     { get => _bodyText;     set { Set(ref _bodyText, value); MarkDirty(); } }
-
-    public string FrameColor
-    {
-        get => _frameColor;
-        set { Set(ref _frameColor, value); LoadFrameBitmaps(); MarkDirty(); }
-    }
-
-    // Frame bitmaps
-    private Bitmap? _baseFrameBitmap;
-    private Bitmap? _costBitmap;
-    private Bitmap? _titleBitmap;
-    private Bitmap? _topRightBitmap;
-    private Bitmap? _nameBarBitmap;
-    private Bitmap? _bottomLeftBitmap;
-    private Bitmap? _bottomCenterBitmap;
-    private Bitmap? _bottomRightBitmap;
-
-    public Bitmap? BaseFrameBitmap   { get => _baseFrameBitmap;   set => Set(ref _baseFrameBitmap, value); }
-    public Bitmap? CostBitmap        { get => _costBitmap;        set => Set(ref _costBitmap, value); }
-    public Bitmap? TitleBitmap       { get => _titleBitmap;       set => Set(ref _titleBitmap, value); }
-    public Bitmap? TopRightBitmap    { get => _topRightBitmap;    set => Set(ref _topRightBitmap, value); }
-    public Bitmap? NameBarBitmap     { get => _nameBarBitmap;     set => Set(ref _nameBarBitmap, value); }
-    public Bitmap? BottomLeftBitmap  { get => _bottomLeftBitmap;  set => Set(ref _bottomLeftBitmap, value); }
-    public Bitmap? BottomCenterBitmap{ get => _bottomCenterBitmap;set => Set(ref _bottomCenterBitmap, value); }
-    public Bitmap? BottomRightBitmap { get => _bottomRightBitmap; set => Set(ref _bottomRightBitmap, value); }
-
-    private void LoadFrameBitmaps()
-    {
-        var dir = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "frames", "monolith", _frameColor);
-        BaseFrameBitmap    = Load(System.IO.Path.Combine(dir, $"{_frameColor}_base.png"));
-        CostBitmap         = Load(System.IO.Path.Combine(dir, "cost.png"));
-        TitleBitmap        = Load(System.IO.Path.Combine(dir, "title.png"));
-        TopRightBitmap     = Load(System.IO.Path.Combine(dir, "top_right.png"));
-        NameBarBitmap      = Load(System.IO.Path.Combine(dir, "name_bar.png"));
-        BottomLeftBitmap   = Load(System.IO.Path.Combine(dir, "bottom_left.png"));
-        BottomCenterBitmap = Load(System.IO.Path.Combine(dir, "bottom_center.png"));
-        BottomRightBitmap  = Load(System.IO.Path.Combine(dir, "bottom_right.png"));
-
-    }
-
-    private static Bitmap? Load(string path)
-    {
-        try { return new Bitmap(path); }
-        catch { return null; }
-    }
-
-    private string _bgColor = "#000000";
-    public string BgColor { get => _bgColor; set { Set(ref _bgColor, value); OnBgColorChanged(); MarkDirty(); } }
-
-    private void OnBgColorChanged()
-    {
-        if (Avalonia.Media.Color.TryParse(_bgColor, out var color))
-            BgBrush = new Avalonia.Media.SolidColorBrush(color);
-    }
-
-    private Avalonia.Media.SolidColorBrush _bgBrush = new(Avalonia.Media.Colors.Black);
-    public Avalonia.Media.SolidColorBrush BgBrush { get => _bgBrush; set => Set(ref _bgBrush, value); }
-
+    // ---- cards -----------------------------------------------------------
     public void RefreshCardList()
     {
-        var cards = CardRepository.ReadAll()
-            .OrderBy(card => card.Title ?? string.Empty, StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-
+        var cards = CardRepository.ReadAll().OrderBy(c => c.Title ?? "", StringComparer.OrdinalIgnoreCase).ToArray();
         Cards.Clear();
-        foreach (var card in cards)
-            Cards.Add(card);
+        foreach (var c in cards) Cards.Add(c);
     }
 
     public void NewCard()
     {
         CurrentCard = new Card();
-        SelectedCard = null;
-        LoadCardIntoEditor(CurrentCard);
-        SelectedCardId = "";
-        IsDirty = false;
+        Fill(CurrentCard);
     }
 
     public void LoadCard(Card card)
     {
         CurrentCard = card;
-        SelectedCard = card;
-        LoadCardIntoEditor(card);
-        SelectedCardId = card.Id.ToString();
-        IsDirty = false;
+        Fill(card);
     }
 
-    public void SaveCard()
+    void Fill(Card card)
     {
-        if (CurrentCard == null) return;
-
-        if (string.IsNullOrWhiteSpace(Title))
+        _loading = true;
+        foreach (var z in Zones)
         {
-            ErrorMessage = "Card name (Top Center) is required!";
-            return;
+            z.Text = (string?)typeof(Card).GetProperty(z.Key)!.GetValue(card) ?? "";
+            z.Error = "";
         }
-
-        ErrorMessage = "";
-
-        CurrentCard.Cost         = Cost;
-        CurrentCard.Title        = Title;
-        CurrentCard.TopRight     = TopRight;
-        CurrentCard.NameBar      = NameBar;
-        CurrentCard.BottomLeft   = BottomLeft;
-        CurrentCard.BottomCenter = BottomCenter;
-        CurrentCard.BottomRight  = BottomRight;
-        CurrentCard.BodyText     = BodyText;
-        CurrentCard.BgColor      = BgColor;
-        CurrentCard.FrameColor   = FrameColor;
-
-        if (CurrentCard.Id == 0)
-            CurrentCard.Id = CardRepository.Create(CurrentCard);
-        else
-            CardRepository.Update(CurrentCard);
-
-        RefreshCardList();
+        BodyText = card.BodyText ?? "";
+        BgColor = card.BgColor ?? "#000000";
+        FrameColor = Frames.Resolve(card.FrameColor);          // a color from an older frame set (silver, gold...) becomes its nearest match
+        _pendingArtPath = null;
+        SetArt(card.Id > 0 && ImageManager.CardArtExists(card.Id) ? Load(ImageManager.GetCardArtPath(card.Id)) : null);
+        _loading = false;
+        if (_tinted == null) LoadFrames();                // first card only: later cards re-tint when their color differs
         IsDirty = false;
     }
 
-    public void DeleteCard(int cardId)
+    /// <summary>Validate and save. Returns false when something needs fixing (the zone shows the error).</summary>
+    public bool Save()
     {
-        CardRepository.Delete(cardId);
+        if (CurrentCard == null) return false;
+        var title = Zones.First(z => z.Key == "Title");
+        if (string.IsNullOrWhiteSpace(title.Text)) { title.Error = "Give the card a name."; return false; }
+        title.Error = "";
+
+        foreach (var z in Zones) typeof(Card).GetProperty(z.Key)!.SetValue(CurrentCard, z.Text);
+        CurrentCard.BodyText = BodyText;
+        CurrentCard.BgColor = BgColor;
+        CurrentCard.FrameColor = FrameColor;
+
+        if (CurrentCard.Id == 0) CurrentCard.Id = CardRepository.Create(CurrentCard);
+        else CardRepository.Update(CurrentCard);
+
+        if (_pendingArtPath != null)                     // a new card has its id only now
+        {
+            ImageManager.SaveCardArt(CurrentCard.Id, _pendingArtPath);
+            _pendingArtPath = null;
+        }
         RefreshCardList();
-        NewCard();
+        IsDirty = false;
+        return true;
     }
 
-    private void LoadCardIntoEditor(Card card)
+    public void DeleteCard(Card card)
     {
-        if (card == null) return;
-
-        _isLoading = true;
-        Cost         = card.Cost         ?? "";
-        Title        = card.Title        ?? "";
-        TopRight     = card.TopRight     ?? "";
-        NameBar      = card.NameBar      ?? "";
-        BottomLeft   = card.BottomLeft   ?? "";
-        BottomCenter = card.BottomCenter ?? "";
-        BottomRight  = card.BottomRight  ?? "";
-        BodyText     = card.BodyText     ?? "";
-        BgColor      = card.BgColor      ?? "#000000";
-        FrameColor = card.FrameColor ?? "silver";
-        _isLoading   = false;
-
-        LoadFrameBitmaps();
+        ImageManager.DeleteCardArt(card.Id);
+        CardRepository.Delete(card.Id);
+        RefreshCardList();
+        if (CurrentCard?.Id == card.Id) NewCard();
     }
 
-    public void SetCardImagePath(string? path)
+    // ---- art -------------------------------------------------------------
+    public void PickArt(string path)
     {
-        if (CurrentCard != null)
-            CurrentCard.ImagePath = path;
+        var bmp = Load(path);
+        if (bmp == null) return;
+        _pendingArtPath = path;
+        SetArt(bmp);
+        MarkDirty();
+    }
+
+    void SetArt(Bitmap? bmp)
+    {
+        var old = Art;
+        Art = bmp ?? Placeholder();
+        if (old != null && !ReferenceEquals(old, _placeholder)) old.Dispose();
+    }
+
+    Bitmap Placeholder() => _placeholder ??= new Bitmap(AssetLoader.Open(new Uri("avares://CardCreator/Assets/art_placeholder.png")));
+
+    // ---- frames ----------------------------------------------------------
+    void LoadFrames()
+    {
+        var next = Frames.Tint(FrameColor, Zones.Select(z => (z.Key, (int)z.FrameX, (int)z.FrameY, (int)z.FrameW, (int)z.FrameH)));
+        var old = _tinted;
+        _tinted = next;
+        BaseFrame = next.Back;
+        foreach (var z in Zones) z.Frame = next.Pieces[z.Key];
+        old?.Dispose();                                  // the previous color's bitmaps are no longer shown
+    }
+
+    static Bitmap? Load(string path)
+    {
+        try { return new Bitmap(path); }
+        catch { return null; }
     }
 }
